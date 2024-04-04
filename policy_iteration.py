@@ -2,7 +2,7 @@ import numpy as np
 
 # hyperparameters
 theta = 1e-6
-discount = 0.90
+discount = 0.95
 
 # environment functions
 state_width = 4
@@ -12,9 +12,10 @@ action_size = 4
 terminal = (0,15)
 
 # necessary variables
+# DO NOT MODIFY THESE DIRECTLY
 state_value_table = np.random.randn(state_size)
 # set terminal values
-for index in range(state_value_table.size):
+for index in range(state_size):
     if index in terminal: state_value_table[index] = 0
 # what to do per state
 policy_table = np.random.randint(0, action_size, size=(state_size,))
@@ -45,12 +46,23 @@ def _get_adjacent_states(state: int) -> list[int]:
     adjacent_list = list(filter(lambda state: _is_valid_state(state), adjacent_list))
     return adjacent_list
 
+def get_state_value(state: int) -> int:
+    if state in terminal: return 0
+    else: return state_value_table[state]
+
+def set_state_value(state: int, value: float) -> None:
+    if state not in terminal: 
+        state_value_table[state] = value
+
 def get_reward(state: int) -> int:
     if state in terminal: return 1
     else: return -1
 
 def get_policy(state: int) -> int:
     return policy_table[state]
+
+def set_policy(state: int, value: float) -> None:
+    policy_table[state] = value
 
 def get_transition_prob(state_from: int, state_to: int) -> float:
     adjacent_states = _get_adjacent_states(state_from)
@@ -73,13 +85,13 @@ def policy_evaluation() -> None:
     delta = 0
     while True:
         for state in range(state_size):
-            value = state_value_table[state]
+            value = get_state_value(state)
             # since there's just one possible next state
             policy_action = get_policy(state)
             next_state = get_next_state(state, policy_action)
-            bellman = get_reward(next_state) + discount*state_value_table[next_state]
-            state_value_table[next_state] = bellman
-            delta = abs(value - state_value_table[next_state])
+            bellman = get_reward(next_state) + discount*get_state_value(next_state)
+            set_state_value(state, bellman)
+            delta = abs(value - get_state_value(next_state))
             if delta < theta: return
 
 # policy improvement
@@ -92,11 +104,11 @@ def policy_improvement() -> bool:
         for action in range(action_size):
             # since there's one possible next state
             next_state = get_next_state(state, action)
-            expected_reward = get_reward(next_state) + discount*state_value_table[next_state]
+            expected_reward = get_reward(next_state) + discount*get_state_value(next_state)
             action_values[action] = expected_reward
         # then get which is the maximum
         argmax = max(action_values, key=action_values.get)
-        policy_table[state] = argmax
+        set_policy(state, argmax)
         if old_action != argmax: policy_stable = False
     return policy_stable
 
@@ -108,5 +120,18 @@ while not policy_stable:
     policy_evaluation()
     policy_stable = policy_improvement()
     iteration += 1
-print(policy_table)
-print(state_value_table)
+
+# print
+symbol_dict = {-1: ' ', 0: '↑', 1: '→', 2: '↓', 3: '←'}
+for row in range(state_height):
+    for col in range(state_width):
+        policy = get_policy(_coord_to_state(col, row))
+        symbol = symbol_dict[policy]
+        print(symbol,end=' ')
+    print()
+
+for row in range(state_height):
+    for col in range(state_width):
+        print(round(get_state_value(_coord_to_state(col, row)), 2),end=' ')
+    print()
+
