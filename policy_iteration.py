@@ -1,8 +1,8 @@
 import numpy as np
 
 # hyperparameters
-theta = 1e-6
-discount = 0.95
+theta = 1e-4
+discount = 0.90
 
 # environment functions
 state_width = 4
@@ -47,12 +47,10 @@ def _get_adjacent_states(state: int) -> list[int]:
     return adjacent_list
 
 def get_state_value(state: int) -> int:
-    if state in terminal: return 0
-    else: return state_value_table[state]
+    return state_value_table[state]
 
 def set_state_value(state: int, value: float) -> None:
-    if state not in terminal: 
-        state_value_table[state] = value
+    state_value_table[state] = value
 
 def get_reward(state: int) -> int:
     if state in terminal: return 1
@@ -82,8 +80,8 @@ def get_next_state(state: int, action: int) -> int:
 
 # policy evaluation
 def policy_evaluation() -> None:
-    delta = 0
     while True:
+        delta = 0
         for state in range(state_size):
             value = get_state_value(state)
             # since there's just one possible next state
@@ -91,7 +89,7 @@ def policy_evaluation() -> None:
             next_state = get_next_state(state, policy_action)
             bellman = get_reward(next_state) + discount*get_state_value(next_state)
             set_state_value(state, bellman)
-            delta = abs(value - get_state_value(next_state))
+            delta = max(delta, abs(value - get_state_value(state)))
             if delta < theta: return
 
 # policy improvement
