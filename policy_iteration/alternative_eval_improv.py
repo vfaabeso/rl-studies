@@ -12,7 +12,7 @@ state_width = 4
 state_height = 4
 state_size = state_width * state_height
 action_size = 4
-terminal = (0,15)
+terminal = (0, 15)
 
 # necessary variables
 # DO NOT MODIFY THESE DIRECTLY
@@ -117,7 +117,7 @@ def policy_evaluation() -> None:
                 # since there's just one possible next state
                 next_state = get_next_state(state, action)
                 expected = get_reward(next_state) + discount*get_state_value(next_state)
-                product = probabilities[action] * expected
+                product = probabilities[action] * get_transition_prob(state, next_state) * expected
                 bellman_sum += product
             set_state_value(state, bellman_sum)
             delta = max(delta, abs(bellman_sum - get_state_value(state)))
@@ -134,7 +134,8 @@ def policy_improvement() -> bool:
             # since there's one possible next state
             next_state = get_next_state(state, action)
             expected_reward = get_reward(next_state) + discount*get_state_value(next_state)
-            action_values[action] = expected_reward
+            product = get_transition_prob(state, next_state) * expected_reward
+            action_values[action] = product
         # then get which is the maximum
         argmax = max(action_values, key=action_values.get)
         set_policy(state, argmax)
@@ -148,6 +149,9 @@ while not policy_stable:
     print(f'Iteration #{iteration}')
     policy_evaluation()
     policy_stable = policy_improvement()
+
+    for state in range(state_size):
+        print(np.round(get_state_actions_prob(state), 2))
     iteration += 1
 
 # print
@@ -164,5 +168,5 @@ for row in range(state_height):
         print(round(get_state_value(_coord_to_state(col, row)), 2),end=' ')
     print()
 
-for state in range(state_size):
-    print(np.round(get_state_actions_prob(state), 2))
+# for state in range(state_size):
+#     print(np.round(get_state_actions_prob(state), 2))
