@@ -71,7 +71,7 @@ def get_reward(state: int) -> int:
 # Change 2: Policy is picked probabilistically
 def get_policy(state: int) -> int:
     probabilities = get_state_actions_prob(state)
-    action = np.random.choice(action_list, probabilities)
+    action = np.random.choice(action_list, p=probabilities)
     return action
 
 ############################################
@@ -83,9 +83,8 @@ def set_policy(state: int, action: int) -> None:
 # Change 4: Function for getting the probability of the
 # actions getting picked given a state, i.e., p(a|s)
 def get_state_actions_prob(state: int) -> list[float]:
-    tally = policy_table[state]
-    if np.sum(tally) == 0: probabilities = np.ones_like(tally) / action_size
-    else: probabilities = tally / np.sum(tally)
+    tally = policy_table[state] + 1
+    probabilities = tally / np.sum(tally)
     return probabilities
 
 def get_transition_prob(state_from: int, state_to: int) -> float:
@@ -121,7 +120,7 @@ def policy_evaluation() -> None:
                 product = probabilities[action] * expected
                 bellman_sum += product
             set_state_value(state, bellman_sum)
-            delta = max(delta, abs(value - get_state_value(state)))
+            delta = max(delta, abs(bellman_sum - get_state_value(state)))
             if delta < theta: return
 
 # policy improvement
@@ -164,3 +163,6 @@ for row in range(state_height):
     for col in range(state_width):
         print(round(get_state_value(_coord_to_state(col, row)), 2),end=' ')
     print()
+
+for state in range(state_size):
+    print(np.round(get_state_actions_prob(state), 2))
