@@ -1,3 +1,6 @@
+# Alternative implementation where policy evaluation
+# and improvement are probabilistic
+
 import numpy as np
 
 # hyperparameters
@@ -132,4 +135,3 @@ for row in range(state_height):
     for col in range(state_width):
         print(round(get_state_value(_coord_to_state(col, row)), 2),end=' ')
     print()
-
