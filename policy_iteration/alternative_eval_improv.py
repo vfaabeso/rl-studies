@@ -32,6 +32,9 @@ def _state_to_coords(state: int) -> (int, int):
 def _coord_to_state(x: int, y: int) -> int:
     return y*state_height + x
 
+def _is_coord_bounded(x: int, y: int) -> bool:
+    return (x >= 0 and x < state_width) and (y >= 0 and y < state_height)
+
 def _is_valid_state(state: int) -> bool:
     return state >= 0 and state < state_size
 
@@ -39,14 +42,10 @@ def _get_adjacent_states(state: int) -> list[int]:
     # get the four directions
     x, y = _state_to_coords(state)
     # top, right, down, left in order
-    adjacent_list = [
-        _coord_to_state(x, y-1),
-        _coord_to_state(x+1, y),
-        _coord_to_state(x, y+1),
-        _coord_to_state(x-1, y),
-    ]
+    adjacent_list = [(x, y-1), (x+1, y),(x, y+1), (x-1, y)]
     # filter if valid
-    adjacent_list = list(filter(lambda state: _is_valid_state(state), adjacent_list))
+    adjacent_list = list(filter(lambda c: _is_coord_bounded(c[0], c[1]), adjacent_list))
+    adjacent_list = list(map(lambda c: _coord_to_state(c[0], c[1]),adjacent_list))
     return adjacent_list
 
 def get_state_value(state: int) -> int:
@@ -113,25 +112,28 @@ def policy_improvement() -> bool:
         if old_action != argmax: policy_stable = False
     return policy_stable
 
-# loop
-policy_stable = False
-iteration = 0
-while not policy_stable:
-    print(f'Iteration #{iteration}')
-    policy_evaluation()
-    policy_stable = policy_improvement()
-    iteration += 1
+for i in range(state_size):
+    print(_get_adjacent_states(i))
 
-# print
-symbol_dict = {-1: ' ', 0: '↑', 1: '→', 2: '↓', 3: '←'}
-for row in range(state_height):
-    for col in range(state_width):
-        policy = get_policy(_coord_to_state(col, row))
-        symbol = symbol_dict[policy]
-        print(symbol,end=' ')
-    print()
+# # loop
+# policy_stable = False
+# iteration = 0
+# while not policy_stable:
+#     print(f'Iteration #{iteration}')
+#     policy_evaluation()
+#     policy_stable = policy_improvement()
+#     iteration += 1
 
-for row in range(state_height):
-    for col in range(state_width):
-        print(round(get_state_value(_coord_to_state(col, row)), 2),end=' ')
-    print()
+# # print
+# symbol_dict = {-1: ' ', 0: '↑', 1: '→', 2: '↓', 3: '←'}
+# for row in range(state_height):
+#     for col in range(state_width):
+#         policy = get_policy(_coord_to_state(col, row))
+#         symbol = symbol_dict[policy]
+#         print(symbol,end=' ')
+#     print()
+
+# for row in range(state_height):
+#     for col in range(state_width):
+#         print(round(get_state_value(_coord_to_state(col, row)), 2),end=' ')
+#     print()
