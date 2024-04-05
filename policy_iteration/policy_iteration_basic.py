@@ -1,6 +1,3 @@
-# Alternative implementation where policy evaluation
-# and improvement are probabilistic
-
 import numpy as np
 
 # hyperparameters

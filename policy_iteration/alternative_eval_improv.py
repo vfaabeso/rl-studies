@@ -20,8 +20,17 @@ state_value_table = np.random.randn(state_size)
 # set terminal values
 for index in range(state_size):
     if index in terminal: state_value_table[index] = 0
+
 # what to do per state
-policy_table = np.random.randint(0, action_size, size=(state_size,))
+############################################
+# Change 1: Instead of using just one value, policy is probabilistic
+# Policy becomes a 2D array with the format Policy[state][action] -> # of times picked
+# Number of times picked corresponds to the probability of it being selected
+policy_table = np.full((state_size, action_size), 0)
+
+# in order to not create the array every time
+states_list = np.array([i for i in range(state_size)])
+action_list = np.array([i for i in range(action_size)])
 
 # helper functions
 def _state_to_coords(state: int) -> (int, int):
@@ -58,11 +67,26 @@ def get_reward(state: int) -> int:
     if state in terminal: return 1
     else: return -1
 
+############################################
+# Change 2: Policy is picked probabilistically
 def get_policy(state: int) -> int:
-    return policy_table[state]
+    probabilities = get_state_actions_prob(state)
+    action = np.random.choice(action_list, probabilities)
+    return action
 
-def set_policy(state: int, value: float) -> None:
-    policy_table[state] = value
+############################################
+# Change 3: Policy is set incrementally
+def set_policy(state: int, action: int) -> None:
+    policy_table[state][action] += 1
+
+############################################
+# Change 4: Function for getting the probability of the
+# actions getting picked given a state, i.e., p(a|s)
+def get_state_actions_prob(state: int) -> list[float]:
+    tally = policy_table[state]
+    if np.sum(tally) == 0: probabilities = np.ones_like(tally) / action_size
+    else: probabilities = tally / np.sum(tally)
+    return probabilities
 
 def get_transition_prob(state_from: int, state_to: int) -> float:
     adjacent_states = _get_adjacent_states(state_from)
@@ -81,16 +105,22 @@ def get_next_state(state: int, action: int) -> int:
     else: return new_state
 
 # policy evaluation
+############################################
+# Change 5: Using Iterative Policy Evaluation (Chapter 4.1)
 def policy_evaluation() -> None:
     while True:
         delta = 0
         for state in range(state_size):
-            value = get_state_value(state)
-            # since there's just one possible next state
-            policy_action = get_policy(state)
-            next_state = get_next_state(state, policy_action)
-            bellman = get_reward(next_state) + discount*get_state_value(next_state)
-            set_state_value(state, bellman)
+            # get the prob density
+            probabilities = get_state_actions_prob(state)
+            bellman_sum = 0
+            for action in range(action_size):
+                # since there's just one possible next state
+                next_state = get_next_state(state, action)
+                expected = get_reward(next_state) + discount*get_state_value(next_state)
+                product = probabilities[action] * expected
+                bellman_sum += product
+            set_state_value(state, bellman_sum)
             delta = max(delta, abs(value - get_state_value(state)))
             if delta < theta: return
 
