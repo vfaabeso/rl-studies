@@ -5,7 +5,7 @@ import numpy as np
 
 # hyperparameters
 theta = 1e-4
-discount = 0.90
+discount = 0.95
 
 # environment functions
 state_width = 4
@@ -111,29 +111,26 @@ def policy_improvement() -> bool:
         set_policy(state, argmax)
         if old_action != argmax: policy_stable = False
     return policy_stable
+    
+# loop
+policy_stable = False
+iteration = 0
+while not policy_stable:
+    print(f'Iteration #{iteration}')
+    policy_evaluation()
+    policy_stable = policy_improvement()
+    iteration += 1
 
-for i in range(state_size):
-    print(_get_adjacent_states(i))
+# print
+symbol_dict = {-1: ' ', 0: '↑', 1: '→', 2: '↓', 3: '←'}
+for row in range(state_height):
+    for col in range(state_width):
+        policy = get_policy(_coord_to_state(col, row))
+        symbol = symbol_dict[policy]
+        print(symbol,end=' ')
+    print()
 
-# # loop
-# policy_stable = False
-# iteration = 0
-# while not policy_stable:
-#     print(f'Iteration #{iteration}')
-#     policy_evaluation()
-#     policy_stable = policy_improvement()
-#     iteration += 1
-
-# # print
-# symbol_dict = {-1: ' ', 0: '↑', 1: '→', 2: '↓', 3: '←'}
-# for row in range(state_height):
-#     for col in range(state_width):
-#         policy = get_policy(_coord_to_state(col, row))
-#         symbol = symbol_dict[policy]
-#         print(symbol,end=' ')
-#     print()
-
-# for row in range(state_height):
-#     for col in range(state_width):
-#         print(round(get_state_value(_coord_to_state(col, row)), 2),end=' ')
-#     print()
+for row in range(state_height):
+    for col in range(state_width):
+        print(round(get_state_value(_coord_to_state(col, row)), 2),end=' ')
+    print()
