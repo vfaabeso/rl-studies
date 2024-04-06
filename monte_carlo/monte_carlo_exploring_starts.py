@@ -1,16 +1,15 @@
 import gymnasium as gym
 import numpy as np
-env = gym.make("Blackjack-v1")
 
-# get the shape of the states
-state_shape = tuple(map(lambda space: space.n, env.observation_space.spaces))
-state_action_shape = tuple(list(state_shape) + [env.action_space.n])
-
-max_episodes = 10000
-discount = 1 # recommended according to the textbook
-
-def monte_carlo_exploring_starts() -> None:
+def monte_carlo_exploring_starts() -> list:
     # initialize
+    env = gym.make("Blackjack-v1")
+    # get the shape of the states
+    state_shape = tuple(map(lambda space: space.n, env.observation_space.spaces))
+    state_action_shape = tuple(list(state_shape) + [env.action_space.n])
+    max_episodes = 500_000
+    discount = 1 # recommended according to the textbook
+
     # the policy space has the axes
     # (player's total sum, dealer showing card value, usable ace)
     # which has the size (32, 11, 2)
@@ -18,9 +17,11 @@ def monte_carlo_exploring_starts() -> None:
     policy_table = np.random.randint(0, env.action_space.n, size=state_shape)
     # q values
     quality_table = np.random.normal(size=state_action_shape)
-    # empty list per possible state
-    returns_table = np.empty(shape=state_action_shape, dtype=object)
-    returns_table.fill([])
+    # # empty list per possible state
+    # returns_table = np.empty(shape=state_action_shape, dtype=object)
+    # returns_table.fill([])
+    # how many times it has been visited instead of making a list table above
+    returns_count = np.full(shape=state_action_shape, fill_value=0)
 
     # episode generation
     # loop forever (or at maximum episode)
@@ -58,9 +59,17 @@ def monte_carlo_exploring_starts() -> None:
                 # flatten current state action
                 flat_state_action = tuple(sum([list(current_state), [current_action]], []))
                 # append G to Returns(S_t)
-                (returns_table[flat_state_action]).append(expected)
+                # this is not necessary anymore since we're recomputing averages
+                # (returns_table[flat_state_action]).append(expected)
                 # Q(S_t, A_t) <- average(Returns(S_t, A_t))
-                quality_table[flat_state_action] = np.average(returns_table[flat_state_action])
+                # we'll recompute the averages here
+                old_average = quality_table[flat_state_action]
+                # recalculate count
+                returns_count[flat_state_action] += 1
+                new_count = returns_count[flat_state_action]
+                new_average = old_average + (1/new_count) * (expected - old_average)
+                # quality_table[flat_state_action] = np.average(returns_table[flat_state_action])
+                quality_table[flat_state_action] = new_average
                 # policy(S_t) <- argmax of a (Q(S_t, a))
                 best_action, best_value = None, -np.inf
                 for test_action in range(env.action_space.n):
@@ -69,17 +78,20 @@ def monte_carlo_exploring_starts() -> None:
                         best_action = test_action
                         best_value = quality_table[flat_test_action]
                 policy_table[current_state] = best_action
+    return policy_table
 
-monte_carlo_exploring_starts()
+# run the simulation
+policy_table = monte_carlo_exploring_starts()
 
-    
-# env = gym.make("Blackjack-v1", render_mode="human")
-# observation, info = env.reset(seed=42)
-# for _ in range(1000):
-#     action = env.action_space.sample()  # this is where you would insert your policy
-#     observation, reward, terminated, truncated, info = env.step(action)
+# test if it wins constantly
+env = gym.make("Blackjack-v1", render_mode="human")
+observation, info = env.reset(seed=42)
+for _ in range(1000):
+    action = policy_table[observation]  # this is where you would insert your policy
+    observation, reward, terminated, truncated, info = env.step(action)
+    if terminated or truncated:
+        # get the end result
+        print(observation, reward)
+        observation, info = env.reset()
 
-#     if terminated or truncated:
-#         observation, info = env.reset()
-
-# env.close()
+env.close()
