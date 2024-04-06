@@ -7,7 +7,7 @@ def monte_carlo_exploring_starts() -> list:
     # get the shape of the states
     state_shape = tuple(map(lambda space: space.n, env.observation_space.spaces))
     state_action_shape = tuple(list(state_shape) + [env.action_space.n])
-    max_episodes = 10_000
+    max_episodes = 500_000
     discount = 1 # recommended according to the textbook
 
     # the policy space has the axes
@@ -30,28 +30,28 @@ def monte_carlo_exploring_starts() -> list:
         terminated = False
         current_time = 0
         # choose an initial state and action
-        old_state, info = env.reset(seed=42)
+        old_state, info = env.reset()
         action = env.action_space.sample()
         # generate episode via the current policy
         episode_list = [] #accepts a list of (S, A, R)
         while not terminated:
             state, reward, terminated, truncated, info = env.step(action)
             # append to the episode list
+            # this is the (S_t, A_t, R_t+1) tuple
             episode_list.append((old_state, action, reward))
             old_state = state
             action = policy_table[old_state] # determine the next action
             current_time += 1
-        final_time = current_time - 1
+        final_time = current_time-1
         # G <- 0
         expected = 0
         # loop for each step of the episode
         visited_pairs = [] # keep track of visited pair of states and actions
-        for step in range(final_time-1, 0):
-            reward = episode_list[step+1][2]
+        for step in range(final_time, -1, -1):
+            current_state, current_action, reward = episode_list[step]
             # G <- gamma * G + R_t+1
             expected = discount * expected + reward
             # unless the state-action pair appears in the visited pairs
-            current_state, current_action, _ = episode_list[step]
             if (current_state, current_action) not in visited_pairs:
                 current_state_action = (current_state, current_action)
                 # append in visited pair
@@ -78,19 +78,37 @@ def monte_carlo_exploring_starts() -> list:
                         best_action = test_action
                         best_value = quality_table[flat_test_action]
                 policy_table[current_state] = best_action
-        print(visited_pairs)
     return policy_table
 
 # run the simulation
-policy_table = monte_carlo_exploring_starts()
+# policy_table = monte_carlo_exploring_starts()
 # np.save('policy_table.npy', policy_table)
 
 # test cases
-# policy_table = np.load('policy_table.npy')
-# print(policy_table[(14, 7, 1)])
-# print(policy_table[(20, 7, 1)])
-# print(policy_table[(14, 8, 0)])
-# print(policy_table[(20, 8, 0)])
+policy_table = np.load('policy_table.npy')
+
+# usable ace case
+print('Usable Ace')
+for player_sum in range(21, 10, -1):
+    print(player_sum, end=' ')
+    for dealer_value in range(11):
+        print(policy_table[(player_sum, dealer_value, 1)], end='')
+    print()
+print('   ', end='')
+for dealer in ('0', 'A', '2', '3', '4', '5', '6', '7', '8', '9', 'X'):
+    print(dealer, end='')
+print('\n')
+# no usable ace case
+print('No Usable Ace')
+for player_sum in range(21, 10, -1):
+    print(player_sum, end=' ')
+    for dealer_value in range(11):
+        print(policy_table[(player_sum, dealer_value, 0)], end='')
+    print()
+print('   ', end='')
+for dealer in ('0', 'A', '2', '3', '4', '5', '6', '7', '8', '9', 'X'):
+    print(dealer, end='')
+print('\n')
 
 # # test if it wins constantly
 # env = gym.make("Blackjack-v1", render_mode="human")
