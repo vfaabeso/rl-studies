@@ -7,7 +7,7 @@ def monte_carlo_exploring_starts() -> list:
     # get the shape of the states
     state_shape = tuple(map(lambda space: space.n, env.observation_space.spaces))
     state_action_shape = tuple(list(state_shape) + [env.action_space.n])
-    max_episodes = 500_000
+    max_episodes = 1_000_000
     discount = 1 # recommended according to the textbook
 
     # the policy space has the axes
@@ -92,7 +92,9 @@ print('Usable Ace')
 for player_sum in range(21, 10, -1):
     print(player_sum, end=' ')
     for dealer_value in range(11):
-        print(policy_table[(player_sum, dealer_value, 1)], end='')
+        if policy_table[(player_sum, dealer_value, 1)]==1:
+            print('█', end='')
+        else: print(' ', end='')
     print()
 print('   ', end='')
 for dealer in ('0', 'A', '2', '3', '4', '5', '6', '7', '8', '9', 'X'):
@@ -103,7 +105,9 @@ print('No Usable Ace')
 for player_sum in range(21, 10, -1):
     print(player_sum, end=' ')
     for dealer_value in range(11):
-        print(policy_table[(player_sum, dealer_value, 0)], end='')
+        if policy_table[(player_sum, dealer_value, 0)]==1:
+            print('█', end='')
+        else: print(' ', end='')
     print()
 print('   ', end='')
 for dealer in ('0', 'A', '2', '3', '4', '5', '6', '7', '8', '9', 'X'):
