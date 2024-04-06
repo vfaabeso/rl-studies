@@ -6,7 +6,7 @@ env = gym.make("Blackjack-v1")
 state_shape = tuple(map(lambda space: space.n, env.observation_space.spaces))
 state_action_shape = tuple(list(state_shape) + [env.action_space.n])
 
-max_episodes = 500_000
+max_episodes = 10000
 discount = 1 # recommended according to the textbook
 
 def monte_carlo_exploring_starts() -> None:
@@ -19,11 +19,13 @@ def monte_carlo_exploring_starts() -> None:
     # q values
     quality_table = np.random.normal(size=state_action_shape)
     # empty list per possible state
-    returns_table = np.full(shape=state_action_shape, fill_value=[])
+    returns_table = np.empty(shape=state_action_shape, dtype=object)
+    returns_table.fill([])
 
     # episode generation
     # loop forever (or at maximum episode)
     for episode_idx in range(max_episodes):
+        print(episode_idx)
         terminated = False
         current_time = 0
         # choose an initial state and action
@@ -54,19 +56,22 @@ def monte_carlo_exploring_starts() -> None:
                 # append in visited pair
                 visited_pairs.append(current_state_action)
                 # flatten current state action
-                flat_state_action = sum([list(current_state), [current_action]], [])
+                flat_state_action = tuple(sum([list(current_state), [current_action]], []))
                 # append G to Returns(S_t)
-                returns_table[flat_state_action].append(expected)
+                (returns_table[flat_state_action]).append(expected)
                 # Q(S_t, A_t) <- average(Returns(S_t, A_t))
                 quality_table[flat_state_action] = np.average(returns_table[flat_state_action])
                 # policy(S_t) <- argmax of a (Q(S_t, a))
                 best_action, best_value = None, -np.inf
                 for test_action in range(env.action_space.n):
-                    flat_test_action = sum([list(current_state), [test_action]], [])
+                    flat_test_action = tuple(sum([list(current_state), [test_action]], []))
                     if quality_table[flat_test_action] > best_value:
                         best_action = test_action
                         best_value = quality_table[flat_test_action]
                 policy_table[current_state] = best_action
+
+monte_carlo_exploring_starts()
+
     
 # env = gym.make("Blackjack-v1", render_mode="human")
 # observation, info = env.reset(seed=42)
