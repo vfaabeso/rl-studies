@@ -7,7 +7,7 @@ def monte_carlo_exploring_starts() -> list:
     # get the shape of the states
     state_shape = tuple(map(lambda space: space.n, env.observation_space.spaces))
     state_action_shape = tuple(list(state_shape) + [env.action_space.n])
-    max_episodes = 500_000
+    max_episodes = 10_000
     discount = 1 # recommended according to the textbook
 
     # the policy space has the axes
@@ -26,7 +26,7 @@ def monte_carlo_exploring_starts() -> list:
     # episode generation
     # loop forever (or at maximum episode)
     for episode_idx in range(max_episodes):
-        print(episode_idx)
+        #print(episode_idx)
         terminated = False
         current_time = 0
         # choose an initial state and action
@@ -78,20 +78,29 @@ def monte_carlo_exploring_starts() -> list:
                         best_action = test_action
                         best_value = quality_table[flat_test_action]
                 policy_table[current_state] = best_action
+        print(visited_pairs)
     return policy_table
 
 # run the simulation
 policy_table = monte_carlo_exploring_starts()
+# np.save('policy_table.npy', policy_table)
 
-# test if it wins constantly
-env = gym.make("Blackjack-v1", render_mode="human")
-observation, info = env.reset(seed=42)
-for _ in range(1000):
-    action = policy_table[observation]  # this is where you would insert your policy
-    observation, reward, terminated, truncated, info = env.step(action)
-    if terminated or truncated:
-        # get the end result
-        print(observation, reward)
-        observation, info = env.reset()
+# test cases
+# policy_table = np.load('policy_table.npy')
+# print(policy_table[(14, 7, 1)])
+# print(policy_table[(20, 7, 1)])
+# print(policy_table[(14, 8, 0)])
+# print(policy_table[(20, 8, 0)])
 
-env.close()
+# # test if it wins constantly
+# env = gym.make("Blackjack-v1", render_mode="human")
+# observation, info = env.reset(seed=42)
+# for _ in range(1000):
+#     action = policy_table[observation]  # this is where you would insert your policy
+#     observation, reward, terminated, truncated, info = env.step(action)
+#     if terminated or truncated:
+#         # get the end result
+#         print(observation, reward)
+#         observation, info = env.reset()
+
+# env.close()
