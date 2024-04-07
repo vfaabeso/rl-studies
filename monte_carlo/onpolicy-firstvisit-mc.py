@@ -3,6 +3,7 @@
 
 import gymnasium as gym
 import numpy as np
+from tqdm import tqdm
 
 def monte_carlo_exploring_starts() -> list:
     # initialize
@@ -10,7 +11,7 @@ def monte_carlo_exploring_starts() -> list:
     # get the shape of the states
     state_shape = tuple(map(lambda space: space.n, env.observation_space.spaces))
     state_action_shape = tuple(list(state_shape) + [env.action_space.n])
-    max_episodes = 1_000_000
+    max_episodes = 10_000_000
     discount = 1 # recommended according to the textbook
     epsilon = 0.20 # since we're doing an epsilon-soft policy 
     # higher epsilon means more random choosing is allowed
@@ -21,7 +22,7 @@ def monte_carlo_exploring_starts() -> list:
 
     # episode generation
     # loop forever (or at maximum episode)
-    for episode_idx in range(max_episodes):
+    for episode_idx in tqdm(range(max_episodes)):
         terminated = False
         current_time = 0
         # choose an initial state and action
@@ -85,37 +86,7 @@ def monte_carlo_exploring_starts() -> list:
 
 # run the simulation
 policy_table = monte_carlo_exploring_starts()
-np.save('policy_table_epsilon_soft.npy', policy_table)
-
-# test cases
-policy_table = np.load('policy_table_epsilon_soft.npy')
-
-# usable ace case
-print('Usable Ace')
-for player_sum in range(21, 10, -1):
-    print(player_sum, end=' ')
-    for dealer_value in range(11):
-        if policy_table[(player_sum, dealer_value, 1)]==1:
-            print('█', end='')
-        else: print(' ', end='')
-    print()
-print('   ', end='')
-for dealer in ('0', 'A', '2', '3', '4', '5', '6', '7', '8', '9', 'X'):
-    print(dealer, end='')
-print('\n')
-# no usable ace case
-print('No Usable Ace')
-for player_sum in range(21, 10, -1):
-    print(player_sum, end=' ')
-    for dealer_value in range(11):
-        if policy_table[(player_sum, dealer_value, 0)]==1:
-            print('█', end='')
-        else: print(' ', end='')
-    print()
-print('   ', end='')
-for dealer in ('0', 'A', '2', '3', '4', '5', '6', '7', '8', '9', 'X'):
-    print(dealer, end='')
-print('\n')
+np.save('on_policy_first_visit_mc.npy', policy_table)
 
 # # test if it wins constantly
 # env = gym.make("Blackjack-v1", render_mode="human")
