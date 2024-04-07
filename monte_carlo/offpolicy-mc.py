@@ -22,7 +22,7 @@ def off_policy_monte_carlo() -> list:
         best_val, best_action = -np.inf, None
         for action in range(env.action_space.n):
             # create flattened tuple
-            state_action = sum([list(state), [action]], [])
+            state_action = tuple(sum([list(state), [action]], []))
             if quality_table[state_action] > best_val:
                 best_val = quality_table[state_action]
                 best_action = action
@@ -70,7 +70,8 @@ def off_policy_monte_carlo() -> list:
     for player_sum in range(state_shape[0]):
         for dealer_value in range(state_shape[1]):
             for use_ace in range(state_shape[2]):
-                policy_table[(player_sum, dealer_value, use_ace)] = greedy_policy()
+                sample_state = (player_sum, dealer_value, use_ace)
+                policy_table[sample_state] = greedy_policy(sample_state)
 
     # episode generation
     # loop forever (or at maximum episode)
@@ -83,7 +84,7 @@ def off_policy_monte_carlo() -> list:
         for step in range(final_time, -1, -1):
             current_state, current_action, reward = episode_list[step]
             # create a flattened state-action tuple
-            current_state_action = sum([list(current_state), [current_action]], [])
+            current_state_action = tuple(sum([list(current_state), [current_action]], []))
             # G <- gamma * G + R_t+1
             expected = discount * expected + reward
             # C(S_t, A_t) <- C + W
@@ -100,7 +101,7 @@ def off_policy_monte_carlo() -> list:
     return policy_table
 
 # run the simulation
-policy_table = monte_carlo_exploring_starts()
+policy_table = off_policy_monte_carlo()
 np.save('monte-carlo.npy', policy_table)
 
 # test cases
