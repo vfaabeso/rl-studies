@@ -6,6 +6,7 @@
     "imshow",
     "meshgrid",
     "randn",
+    "tqdm",
     "xlabel",
     "ylabel"
   ]
