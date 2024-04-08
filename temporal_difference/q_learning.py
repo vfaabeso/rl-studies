@@ -2,9 +2,12 @@ import gymnasium as gym
 import numpy as np
 from tqdm import tqdm
 
-# define the SARSA algorithm
+# define the Q-learning algorithm
 # return the q table
-def sarsa() -> list:
+
+# The main difference is that storing for the old action
+# is not necessary anymore
+def q_learning() -> list:
     # initialize step size and epsilon
     step_size = 0.01
     epsilon = 0.1
@@ -50,22 +53,26 @@ def sarsa() -> list:
     for episode_idx in tqdm(range(max_episodes)):
         # initialize state
         state, _ = env.reset()
-        # choose action from the current policy
-        action = policy(state)
         # loop for each step of episode
         terminated = False
         while not terminated:
+            # choose A from S using policy
+            action = policy(state)
             # take action A, observe R, S'
             new_state, reward, terminated, _, _ = env.step(action)
-            # choose A' from S' using policy
-            new_action = policy(new_state)
-            # update q table
+            # prerequisites for updating the q table
             old_table = q_table[(state, action)]
-            new_table = q_table[(new_state, new_action)]
-            update = old_table + step_size * (reward + discount * new_table - old_table)
+            # for computing max a of Q(S', a)
+            best_action, best_value = None, -np.inf
+            for action_test in range(action_size):
+                if q_table[(new_state, action_test)] > best_value:
+                    best_action = action_test
+                    best_value = q_table[(new_state, action_test)]
+            # finally update the table
+            update = old_table + step_size * (reward + discount * best_value - old_table)
             q_table[(state, action)] = update
-            # set the new state and action
-            state = new_state; action = new_action
+            # set the new state
+            state = new_state
 
     # return the table
     return q_table
@@ -73,10 +80,10 @@ def sarsa() -> list:
 #test the sarsa algorithm here
 env = gym.make("CliffWalking-v0", render_mode="human")
 
-q_table = sarsa()
+q_table = q_learning()
 # save the result
-np.save('sarsa.npy', q_table)
-q_table = np.load('sarsa.npy')
+np.save('q_learning.npy', q_table)
+# q_table = np.load('sarsa.npy')
 
 # use the greedy approach instead
 def greedy_policy(q_table: list, state: int) -> int:
