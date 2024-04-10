@@ -4,7 +4,7 @@ import numpy as np
 # States: 0-3, 0 and 3 are terminal
 # Actions: 0 = Left, 1 = Right
 class Environment:
-    def __init__(self) -> None:
+    def __init__(self):
         self._default_state = 2
         self.current_state = None
         self.state_size = 4
