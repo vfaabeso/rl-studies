@@ -4,18 +4,15 @@ from gridworld import *
 
 # define the N-STEP-SARSA algorithm
 # return the q table
-def sarsa() -> list:
+
+def n_step_sarsa(env) -> list:
     # initialize step size and epsilon
     step_size = 0.01
     epsilon = 0.1
     discount = 1
     n = 10 # the n in n-step algorithm
-
-    # init environment
-    # with default width and height of 10
-    env = GridWorld()
     # episodes
-    max_episodes = 50_000
+    max_episodes = 5_000_000
 
     # shorthands
     state_size = env.state_size
@@ -76,8 +73,9 @@ def sarsa() -> list:
                 # if S_t+1 is terminated
                 if terminated:
                     episode_length = current_time + 1
-                else:
+                else: #select and store an action
                     action = policy(next_state)
+                    action_run.append(action)
             # define tau
             tau = current_time - n + 1
             # initialize G
@@ -93,7 +91,29 @@ def sarsa() -> list:
                 q_table[(state_run[tau], action_run[tau])] = old_q + step_size * (expected - old_q)
                 # update policy (already implied)
             current_time += 1
-
+            state = next_state
     # return the table
     return q_table
 
+# init environment
+# with default width and height of 10
+env = GridWorld()
+q_table = n_step_sarsa(env)
+
+# save the result
+np.save('n_step_sarsa.npy', q_table)
+q_table = np.load('n_step_sarsa.npy')
+
+symbols = '^>v<'
+for state in range(env.state_size):
+    x, y = env._state_to_coords(state)
+    if state == env.terminal:
+        print('G', end='')
+    else:
+        best_action, best_value = None, -np.inf
+        for action in range(env.action_size):
+            if q_table[(state, action)] > best_value:
+                best_action = action
+                best_value = q_table[(state, action)]
+        print(symbols[best_action], end='')
+    if x >= env.width - 1: print()

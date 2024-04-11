@@ -39,8 +39,8 @@ class GridWorld:
         possible_actions = []
         # top, right, down, left
         if y > 0: possible_actions.append(0)
-        if x < self.width: possible_actions.append(1)
-        if y < self.height: possible_actions.append(2)
+        if x < self.width-1: possible_actions.append(1)
+        if y < self.height-1: possible_actions.append(2)
         if x > 0: possible_actions.append(3)
         return tuple(possible_actions) 
 
