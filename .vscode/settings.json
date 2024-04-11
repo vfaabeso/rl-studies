@@ -3,6 +3,7 @@
     "arange",
     "dtype",
     "figsize",
+    "gridworld",
     "imshow",
     "meshgrid",
     "randn",
