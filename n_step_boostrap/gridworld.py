@@ -3,14 +3,21 @@
 import numpy as np
 
 class GridWorld:
-    def __init__(self, width=10, height=10):
+    # terminal coords is (x, y)
+    def __init__(self, width=10, height=10, terminal_coords=None):
         self.width = width
         self.height = height
         self.state_size = width * height
         self.action_size = 4
         # this is fixed
-        self.terminal = np.random.randint(0, self.state_size)
+        self.terminal = self._set_terminal(terminal_coords)
         self.current_state = self._select_init_state()
+
+    def _set_terminal(self, terminal_coords) -> int:
+        if terminal_coords == None:
+            return np.random.randint(0, self.state_size)
+        else:
+            return self._coords_to_state(terminal_coords[0], terminal_coords[1])
 
     def _select_init_state(self) -> int:
         state = None
@@ -28,10 +35,13 @@ class GridWorld:
     def _coords_to_state(self, x: int, y: int) -> int:
         return y * self.height + x
 
+    def _coords_bounded(self, x: int, y: int) -> bool:
+        return x >= 0 and x < self.width and y >= 0 and y < self.height
+
     def reset(self) -> int:
         self.current_state = self._select_init_state()
         return self.current_state
-    
+
     def possible_actions(self, state: int) -> tuple:
         # check if in terminal
         if state == self.terminal: return ()
@@ -46,15 +56,15 @@ class GridWorld:
 
     # tuple is (new state, reward, is terminated)
     def step(self, action: int) -> tuple:
-        if action in self.possible_actions(self.current_state):
-            x, y = self._state_to_coords(self.current_state)
-            if      action==0: y-=1
-            elif    action==1: x+=1
-            elif    action==2: y+=1
-            elif    action==3: x-=1
+        x, y = self._state_to_coords(self.current_state)
+        if      action==0: y-=1
+        elif    action==1: x+=1
+        elif    action==2: y+=1
+        elif    action==3: x-=1
+        # check if on bounds
+        if self._coords_bounded(x, y):
             self.current_state = self._coords_to_state(x, y)
-            # check if landed on reward
             if self.current_state == self.terminal:
                 return (self.current_state, 1, True)
             else: return (self.current_state, -1, False)
-        else: return (self.current_state, -1, False)
+        return (self.current_state, -1, False)
