@@ -29,7 +29,7 @@ class GridWorld:
 
     def _state_to_coords(self, state: int) -> tuple:
         x = state % self.width
-        y = state // self.height
+        y = state // self.width
         return x, y
 
     def _coords_to_state(self, x: int, y: int) -> int:
