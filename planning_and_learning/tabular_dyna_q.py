@@ -6,7 +6,7 @@ from tqdm import tqdm
 # the main algorithm
 def tabular_dyna_q(
     env: Maze,
-    max_steps: int = 10000, n: int = 10,
+    max_episodes: int = 50, n: int = 10,
     epsilon: float = 0.2, alpha: float = 0.1, gamma: float = 0.95,
     ):
 
@@ -31,30 +31,32 @@ def tabular_dyna_q(
             choice = np.random.choice(choices)
             return choice
 
-    # the main loop
-    for step in tqdm(range(max_steps)):
-        state = env.current_state #(a)
-        action = policy(state) #(b)
-        next_state, reward, terminated = env.step(action) #(c)
-        if terminated:
-            next_state = env.reset()
-        #(d)
-        old_q = Q[state, action]
-        Q[state, action] = old_q + alpha * (reward + gamma * max(Q[next_state, :]) - old_q)
-        #(e)
-        Model[(state, action)] = (reward, next_state)
-        #(f)
-        for k in range(n):
-            rand_sa, rand_rs = random.choice(list(Model.items()))
-            state, action = rand_sa
-            reward, next_state = rand_rs
+    # episodic loop
+    for episode_idx in tqdm(range(max_episodes)):
+        terminated = False
+        env.reset()
+        while not terminated:
+            state = env.current_state #(a)
+            action = policy(state) #(b)
+            next_state, reward, terminated = env.step(action) #(c)
+            #(d)
             old_q = Q[state, action]
-            Q[state, action] = old_q + alpha * (reward + gamma * np.max(Q[next_state, :]) - old_q)
+            Q[state, action] = old_q + alpha * (reward + gamma * max(Q[next_state, :]) - old_q)
+            #(e)
+            Model[(state, action)] = (reward, next_state)
+            #(f)
+            for k in range(n):
+                rand_sa, rand_rs = random.choice(list(Model.items()))
+                state, action = rand_sa
+                reward, next_state = rand_rs
+                old_q = Q[state, action]
+                Q[state, action] = old_q + alpha * (reward + gamma * np.max(Q[next_state, :]) - old_q)
+            
     return Q
 
 env = Maze(width=9, height=6, start=(0, 2), goal=(8, 0), 
     walls=[(2, 1), (2, 2), (2, 3), (5, 4), (7, 0), (7, 1), (7, 2)])
-Q = tabular_dyna_q(env, max_steps=10000)
+Q = tabular_dyna_q(env, max_episodes=50, n=50)
 
 # save the table
 np.save('tabular_dyna_q.npy', Q)
