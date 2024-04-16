@@ -16,7 +16,7 @@ def transition(state: int, action: int) -> (int, int):
    # stuck if terminal
    if state in terminals: return (state, 0)
    x = state % state_width
-   y = state // state_height
+   y = state // state_width
    if    action == 0: y -= 1
    elif  action == 1: x += 1
    elif  action == 2: y += 1

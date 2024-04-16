@@ -30,7 +30,7 @@ def transition(state: int, action: int) -> list[(int, int, float)]:
    # the intended position
    intended_position = None
    x = state % state_width
-   y = state // state_height
+   y = state // state_width
    if    action == 0: y -= 1
    elif  action == 1: x += 1
    elif  action == 2: y += 1
