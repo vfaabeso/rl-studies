@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "amax",
     "arange",
     "dtype",
     "dyna",
@@ -7,6 +8,8 @@
     "gridworld",
     "imshow",
     "meshgrid",
+    "psar",
+    "pstate",
     "randn",
     "SARSA",
     "tqdm",
