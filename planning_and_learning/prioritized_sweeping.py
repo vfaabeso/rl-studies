@@ -11,7 +11,7 @@ def prioritized_sweeping(
     env: Maze,
     max_episodes: int = 50, n: int = 10,
     epsilon: float = 0.2, alpha: float = 0.1, gamma: float = 0.95,
-    theta=1):
+    theta=5):
 
     # initialize Q(s, a) and Model(s, a) for all states and actions
     # Model(s, a) is a dictionary of the tuple (R, S')
@@ -35,36 +35,6 @@ def prioritized_sweeping(
             choice = np.random.choice(choices)
             return choice
 
-    # get the state, action pairs that are
-    # predicted to lead to a certain state
-    def pred_state(state: int) -> list:
-        # actions and states to return
-        ret_state_act = []
-        # get adjacent states
-        x, y = env.state_to_coords(state)
-        # top, right, down, left
-        potential_coords = [(x, y-1), (x+1, y), (x, y+1), (x-1, y)]
-        # contains both the position relative to the state param
-        # and the actual state/action (tuple)
-        potent_states, potentials = [], []
-        
-        for idx, coord in enumerate(potential_coords):
-            s = env.coords_to_state(coord)
-            if s in env.special_cells:
-                potent_states.append((idx, s))
-        # then get the best actions along with it
-        # based on the current q table
-        for pstate in potent_states:
-            best_act = np.argmax(Q[pstate[1], :])
-            best_value = np.max(Q[pstate[1], :])
-            potentials.append((pstate[0], pstate[1], best_act, best_value))
-        # check if the actions are pointing to the state param
-        for psar in potentials:
-            p, s, a, r = psa
-            if (p + 2) % env.action_size == a:
-                ret_state_act.append((s, a, r))
-        return ret_state_act
-
     # episodic loop
     for episode_idx in tqdm(range(max_episodes)):
         terminated = False
@@ -78,25 +48,26 @@ def prioritized_sweeping(
             #(e)
             P = abs(reward + gamma * np.max(Q[next_state, :]) - Q[state, action])
             #(f)
-            if P > theta: PQueue.push(P, (state, action))
+            if P > theta: PQueue.push_replace(P, (state, action))
             for _ in range(n):
                 # only run if there are elements in it
                 if len(PQueue) <= 0: break 
-                priority, state_action = PQueue.pop_last()
-                state, action = state_action
+                priority, (state, action) = PQueue.pop_last()
                 reward, next_state = Model[(state, action)]
                 old_q = Q[state, action]
                 Q[state, action] = old_q + alpha * (reward + gamma * np.max(Q[next_state, :]) - old_q)
                 # loop for all S_bar, A_bar predicted to lead to S
                 # meaning we refer to all the predicted model
+                # get the state being referred to
+                ref_state = state
                 for state_action, reward_state in list(Model.items()):
-                    s, a = state_action
-                    r, ns = reward_state
-                    if state == ns:
-                        P = abs(r + gamma * np.max(Q[state, :]) - Q[s, a])
-                        if P > theta: PQueue.push(P, (s, a))
+                    state_, action_ = state_action
+                    reward_, next_state = reward_state
+                    if ref_state == next_state:
+                        P = abs(reward_ + gamma * np.max(Q[ref_state, :]) - Q[state_, action_])
+                        if P > theta: PQueue.push(P, (state_, action_))
 
-    print(Model)
+    print(PQueue)
     return Q
 
 env = Maze(width=9, height=6, start=(0, 2), goal=(8, 0), 
